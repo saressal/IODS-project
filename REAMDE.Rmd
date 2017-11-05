@@ -1,0 +1,9 @@
+---
+title: "Readme of the IODS course project"
+author: "Anton Saressalo"
+output: html_document
+---
+
+This is a readme file for the Anton's progress on the course _Introduction to Open Data Science_.
+
+You can follow the progress inn GitHub diary: https://saressal.github.io/IODS-project/
