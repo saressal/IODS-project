@@ -1,7 +1,79 @@
-# Insert chapter 2 title here
+# Chapter 2: Regression and model validation
 
-*Describe the work you have done this week and summarize your learning.*
+## Exercise 1: Reading and exploring the data
 
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using  
+Reading the csv file created in the data wrangling exercise and reading its dimensions:
+```{r}
+my_data = read.csv("data/chapter2data.csv",header=T,check.names=F)
+str(my_data)
+```
+The output tells that the data has 7 variables (or culumns) with 166 observations in each. The dataset measures the relation of course points and various questionnaire answers given by a subject group.  Apart from the resulting points on the course, the measured variables were gender, age, attitude, deep learning points, surface learning points and strategic learning points.
+
+## Exercise 2: Variable relations
+Analyzing the data set with function ggpairs to draw all the possible scatter plots out of the dataset. We need the libraries ggplot2 and GGally to use the function.
+The arguments inside the mapping function aes create separate distributions for each gender for easier visibility. The alpha value makes all graphics partially transparent in order to be able to view all the data. The last argument defines the histograms and their bin numbers.
+```{r warning=FALSE}
+library(ggplot2)
+library(GGally)
+ggpairs(my_data, mapping = aes(col=gender,alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))
+```
+From the graphs we can observe the following:
+
+* About 2/3 of the observations are from females.
+* Ages are mostly focused between 20 and 25 years, tough the oldest ones are over 50.
+* Attitude, points, deep learning, surface learning and strategic learning are all more or less Gaussian distributions. Some better than the other.
+* Differences between males and females can be noted mostly in attitudes and surface learning points, however, this does't seem to affect the course points.
+* Attitude and points have the highest positive correlation. This sounds quite self-explanatory, but it's nice to also be proven with the numbers.
+* Age seems to have small correlation to most other variables, which is also nice to see.
+
+## Exercise 3: Regression fit
+As the dependent variable (result) is points, we need to select the three explanatory variables that have the highest (absolute value) correlation with points. These are:
+
+1. Attitude (0.437)
+2. Strategic learning (0.146)
+3. Surface learning (-0.144)
+
+We need to note that the negative value means negative correlation, but that is also a result.
+
+Fitting a linear regression model with function lm. We use Points as the dependent variable (**y**) and Attitude (**x_1**), stra (**x_2**) and surf (**x_3**) as explanatory variables. The function minimizes the matrix equation **y** = a_1 \* **x_1** + a_2 \* **x_2** + a_3  \* **x_3** + b. The square of the difference between the model and measurements are calculated in each data point and their sum is minimized in order to get the optimal values.
+
+We also print the results of the fit using function summary
+```{r}
+my_model = lm(Points ~ Attitude + stra + surf,data=my_data)
+summary(my_model)
+```
+From here we see that the best fit for the data provides coefficients *intercept = b = 11.01 +/- 3.7, a_1 = 0.34 +/- 0.06, a_2 = 0.85 +/- 0.54 abd -a_3 = 0.59 +/- 0.80.
+
+Now we notice that the error relative estimates of the last two parameters are really high, and also their P-values are greater than 0.1, implying that they are not significant for the model. => It seems that only Attitude is explaining the hehaviour of Points, so let's remove these two other explanatory variables from the model.
+
+```{r}
+my_model2 = lm(Points ~ Attitude,data=my_data)
+summary(my_model2)
+```
+## Exercise 4: Analysis of the model
+Now the fit results in **y** = (0.353 +/- 0.057)**x** + (11.64 +/- 1.83) abd we can see that the error estimates and P-values are even better for both the intercept and the slope. The P-values of 4.12e-9 and 1.95e-9 tell that this fit explains the data set with a really high probability.
+
+Also the parameter Multiple R-squared went slightly down. It measures the squared distance between the fitted **y** and the measured **y**,
+
+i.e. M-R^2 = (**y**-**y'**)^2^
+
+Since now we have only one explanatory variable, R-squared and multiple R-squared are the same. In principal, the R-squared value always increases when more explanatory values are introduced in the model as there will be more degrees of freedom. The parameter Adjusted R-squared tries to compensate this and "normalize" the value to be comparable between different amount of explanatory variables. Luckily, also this value seems to be smaller in the latter model.
+
+## Exercise 5: Model diagnostics
+Plotting the diagnostics of the later model:
+```{r}
+plot(my_model2,which=c(1,2,5))
+```
+Fitting the model, we made several assumptions:
+
+* There actually is a linear regression
+* The errors are normally distributed (with constant variance), not covariant and not correlated to the explanatory variables
+* Each data point has the same weight
+
+The graph residuals vs Fitted tests the constant variance assumption. In the plot we see a more or less constant (or uniformly scattered) trend (red line) throughout the normal data set.
+
+The last plot, Residuals vs Leverage can reveal if some observation has a higher impact on the result than the rest. From the resulting graph we see that most of the observations are located at the lower end of the x-axis, having a very similiar impact. A few points stand out, but still the deviation  is less than 5 %.
+
+In The Q-Q plot, we see the normality of the errors. From the graph we see that a vast majority of the data points fits to the filne reasonably well, but still there is some deviation in either end.
+
+To conclude, it seems that the assumptions fit pretty well and since also both the relative errors are P-values are small, we can deduce that the fit describes the dataset reasonably well. All in all, this means that attitude has a good correlation with succeeding on the course - at least in this case.
