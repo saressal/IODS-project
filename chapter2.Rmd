@@ -1,4 +1,8 @@
 # Chapter 2: Regression and model validation
+## Data wrangling
+
+The script to complete the data wrangling exercise in file [chapter2_wrangling.R](https://github.com/saressal/IODS-project/blob/master/chapter2_wrangling.R)
+
 
 ## Exercise 1: Reading and exploring the data
 
