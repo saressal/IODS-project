@@ -1,0 +1,82 @@
+# Chapter 3: Logistic regression
+## Data wrangling
+
+The script to complete the data wrangling exercise in file [chapter3_wrangling.R](https://github.com/saressal/IODS-project/blob/master/data/chapter3_wrangling.R)
+
+
+## Exercise 2: Reading and exploring the data
+
+Reading the csv file created in the data wrangling exercise and reading its dimensions:
+```{r}
+my_data = read.csv("data/chapter3data.csv",header=T,check.names=F)
+str(my_data)
+```
+The output tells that the data has 35 variables (or culumns) with 382 observations in each. The set includes data from secondary education students in Portuguese schools. It measures various aspects of lives for each and makes it possible to compare them with the grades from 1st, 2nd and 3rd (final) year.  
+
+## Exercise 3: Choosing variables
+In the analysis of alcohol consumption, there might be several and even unexpected relations. I choose the following columns as the most interesting
+
+* sex: Males and females develop at different ages, which might lead to differences also on their alcohol consumptions. I presume that females use more alcohol because of their earlier puberty.
+* goout: Tendency to go out with friends in the late teens I would expect to have high correlation with going out with consuming more alcohol.
+* G3: Alcohol usage might also have an effect on the grades. I expect negative correlation between these two.
+* Pstatus: It is interesting to see if students from divorced families use more alcohol than the others, as I would expect.
+
+## Exercise 4: First findings on the hypotheses
+```{r warning=FALSE}
+library(ggplot2)
+library(GGally)
+```
+### Sex ###
+Creating a box plot for alcohol_use vs sex to see their relations.
+```{r}
+g_sex = ggplot(data=my_data,aes(x=sex,y=alc_use,fill=sex))
+g_sex + geom_boxplot() + ylab("Alcohol usage") + ggtitle("Alcohol usage for males and females")
+```
+Actually, based on this box my hypothesis already seems wrong. It seems that boys drink about twice as much alcohol compared to girls. Also their deviation is generally smaller, even though there are a few outliers.
+
+### Going out ###
+Again, using box plots to compare the alcohol usage with the level of going out.
+```{r}
+g_goout = ggplot(data=my_data,aes(x=factor(goout),y=alc_use))
+g_goout + geom_boxplot() + xlab("Going out") + ylab("Alcohol usage") + ggtitle("Alcohol usage vs going out")
+```
+Here we see that those going out in general also use more alcohol. However, their variance is also larger. What is also noticeable that there is not much difference between the goout levels 2 and 3. My hyptothesis seems to hold for most of the data.
+
+### Grade points ###
+```{r}
+g_pts = ggplot(data=my_data,aes(x=factor(alc_use),y=G3))
+g_pts + geom_boxplot() + xlab("Alcohol usage") + ylab("Third year grade") + ggtitle("Third year grade vs alcohol usage")
+```
+There seems to be surprisingly low correlation between the alcohol usage and grade points. There are less people with heavy alcohol usage, so their variance is smaller. The averages points for each group are really near to each other.
+
+### Parental status ###
+```{r}
+g_par = ggplot(data=my_data,aes(x=Pstatus,y=alc_use,fill=Pstatus))
+g_par + geom_boxplot() + xlab("A = away, T = together") + ylab("Alcohol usage") + ggtitle("Alcohol usage versus parental status")
+```
+From this graph, it is visible that there are not big differences between those whose parents live together and those whose don't. Actually, the average for together is higher than away. Seems like my hypothesis is not very good.
+
+## Exercise 5: Logistic regression ###
+### Sex ###
+Fitting the logistic regression model with glm() and printing its results with summary().
+```{r}
+my_data$sex = factor(my_data$sex)
+my_data$Pstatus = factor(my_data$Pstatus)
+logistic = glm(high_use ~ sex - 1 + goout + G3 + Pstatus-1, data=my_data,family="binomial")
+summary(logistic)
+```
+In the coefficient values we can notice the same as in the previous problem: sex and goout are relatively highly correlated with the alcohol usage with high probability. Grade level and Pstatus not so much.
+
+Calculating the odds ratios, calculating the confidence intervals and printing them out
+```{r warning=FALSE}
+OR = exp(coef(logistic))
+CI = exp(confint(logistic))
+cbind(OR,CI)
+
+```
+
+From these we can see that the odds ratios are close to 1 for G3 and Pstatus, so either having or not having those values, does not tell much about your probable alcohol consumption.
+
+For goout, the ratio is 2, meaning that people going out much are thus twice as likely to consume a lot of alcohol.
+
+For sex, we need to see the ratio of sexM/sexF, which is about 2.3, meaning that men are over doubly likely to be high alcohol consumers than women.
