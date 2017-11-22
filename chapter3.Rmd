@@ -57,7 +57,6 @@ g_par + geom_boxplot() + xlab("A = away, T = together") + ylab("Alcohol usage") 
 From this graph, it is visible that there are not big differences between those whose parents live together and those whose don't. Actually, the average for together is higher than away. Seems like my hypothesis is not very good.
 
 ## Exercise 5: Logistic regression ###
-### Sex ###
 Fitting the logistic regression model with glm() and printing its results with summary().
 ```{r}
 my_data$sex = factor(my_data$sex)

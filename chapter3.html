@@ -213,8 +213,6 @@ g_par + geom_boxplot() + xlab(&quot;A = away, T = together&quot;) + ylab(&quot;A
 </div>
 <div id="exercise-5-logistic-regression" class="section level2">
 <h2>Exercise 5: Logistic regression</h2>
-<div id="sex-1" class="section level3">
-<h3>Sex</h3>
 <p>Fitting the logistic regression model with glm() and printing its results with summary().</p>
 <pre class="r"><code>my_data$sex = factor(my_data$sex)
 my_data$Pstatus = factor(my_data$Pstatus)
@@ -261,7 +259,6 @@ CI = exp(confint(logistic))</code></pre>
 <p>From these we can see that the odds ratios are close to 1 for G3 and Pstatus, so either having or not having those values, does not tell much about your probable alcohol consumption.</p>
 <p>For goout, the ratio is 2, meaning that people going out much are thus twice as likely to consume a lot of alcohol.</p>
 <p>For sex, we need to see the ratio of sexM/sexF, which is about 2.3, meaning that men are over doubly likely to be high alcohol consumers than women.</p>
-</div>
 </div>
 </div>
 
