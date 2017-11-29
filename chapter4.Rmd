@@ -1,0 +1,99 @@
+# Chapter 4: Clustering and classification
+
+## Exercise 2: Rading Boston data
+
+Reading the Boston dataset from library MASS with data() and examining its content.
+```{r}
+library(MASS)
+data("Boston")
+str(Boston)
+```
+In the dataset, we have 14 variables and 506 observations in each. All the observations are numerical and tell about various factors from different neighbourhoods of the city of Boston.
+
+## Exercise 3: Graphical overview
+Analyzing the data set with function ggpairs to draw all the possible scatter plots out of the dataset. We need the libraries ggplot2 and GGally to use the function.
+```{r warning=FALSE}
+library(ggplot2)
+library(GGally)
+ggpairs(Boston)
+summary(Boston)
+```
+From the graphs we can observe the following:
+
+* Surprisingly, only "rm" (average number of rooms) seems to be normally distribyted. Many have only small peaks on either end of the scale and some have weirder, even double distributions visible.
+* Without further investigation, it is difficult to see aby naked eye.ny correlations just from thee figures. Many of the variables seem to be quite clearly not correlated.
+* From the summary, we see that all the numerical values are non-negative, but vary a lot between variables. Also, for example the crime rate has the mean that is really close to the minimum, but far away from the maximum.
+
+## Exercise 4: Standardisation
+
+Scaling all the variables with scale() and printing its summary
+```{r}
+Boston_scaled = as.data.frame(scale(Boston))
+ggpairs(Boston_scaled)
+summary(Boston_scaled)
+```
+Now the data values are comparable with each other, but of course, the numerical values are not directly the observations any more. Now we can see even more clearly that the maximal crime rate is almost 10 units away from the mean value, whereas the next biggest value can be found in dis (distances to employment centres). Almost all of the values between 25 % and 75 % are within 1 unit away from the mean.
+
+In the pairs plot, we do not see any change in the distributions nor correlations - as should be the case.
+
+Next, creating a categorical variable from the crime rate and replacing the variable from the dataset
+```{r}
+library(dplyr)
+crime_quantiles = quantile(Boston_scaled$crim)
+crime <- cut(Boston_scaled$crim, breaks = crime_quantiles, include.lowest = TRUE)
+Boston_scaled = select(Boston_scaled,-crim)
+Boston_scaled = data.frame(Boston_scaled,crime)
+```
+Dividing the data by by drawing random rows with sample
+```{r}
+idx = sample(nrow(Boston_scaled), size=0.8*nrow(Boston_scaled))
+Boston_train = Boston_scaled[idx,]
+Boston_test = Boston_scaled[-idx,]
+```
+
+## Exercise 5: Linear discriminant analysis
+Create the LDA fit and plot it
+```{r}
+lda.fit = lda(crime ~ ., data=Boston_train)
+classes = as.numeric(Boston_train$crime)
+plot(lda.fit,col=classes,pch=classes,dimen=2)
+```
+## Exercise 6: LDA results
+Saving crime categories and removing them from the test set
+```{r}
+Boston_test_crime = Boston_test$crime
+Boston_test = select(Boston_test,-crime)
+```
+Predicting the results and printing the cross-validation table
+```{r}
+lda.pred = predict(lda.fit,newdata=Boston_test)
+table(correct=Boston_test_crime,predicted=lda.pred$class)
+```
+
+We can note that the values in the last two quintiles were predicted really well, but in the lower two the error is much bigger. 
+In the 1st quintile there are actually more errorneus predictions than correct ones.
+
+## Exercise 7: k-means tests
+
+Reloading the data set and standardizing it
+```{r}
+data("Boston")
+Boston_scaled = as.data.frame(scale(Boston))
+```
+Calculating the euclidean distances with dist()
+```{r}
+distances = dist(Boston_scaled)
+```
+Using the k-means algorithm, finding the optimal number of clusters
+```{r}
+k_max = 10
+twcss <- sapply(1:k_max, function(k){kmeans(Boston, k)$tot.withinss})
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+```
+We observe the largest change in slope at 2, so using that as the number of clusters for the actual fit. Visualizing with ggpairs()
+```{r}
+km.fit = kmeans(Boston, centers=2)
+pairs(Boston,col=km.fit$cluster)
+```
+From the (tiny) plots we can see that most of the data is actually quite nicely clustered into two regions, meaning that their classification would be predicted with good odds. However, some variables, such as nox (nigrogen oxide concentration) seem to be much worse compared tto the best ones, such as rad (accessibility to radial highways).
+
