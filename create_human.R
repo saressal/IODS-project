@@ -1,5 +1,8 @@
-# 2. Reading the datasets into variables
+## Chapter 4
 
+library(dplyr)
+
+# 2. Reading the datasets into variables
 hd <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human_development.csv", stringsAsFactors = F)
 gii <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/gender_inequality.csv", stringsAsFactors = F, na.strings = "..")
 
@@ -34,7 +37,7 @@ colnames(gii)[2] = "country"
 colnames(gii)[3] = "GII"
 colnames(gii)[4] = "maternal_mortality"
 colnames(gii)[5] = "birth_rate"
-colnames(gii)[6] = "parliament_reps"
+colnames(gii)[6] = "parliament_F"
 colnames(gii)[7] = "education_F"
 colnames(gii)[8] = "education_M"
 colnames(gii)[9] = "labour_F"
@@ -57,3 +60,33 @@ write.csv(human,file="data/human.csv",row.names=FALSE)
 
 # Make sure that the file is also readable
 glimpse(read.csv("data/human.csv"))
+
+## Chapter 5: Continuing the wrangling
+# 1. Remove the commas from GNI
+library(tidyr)
+library(stringr)
+human$GNI = str_replace(human$GNI,pattern=",", replace="") %>% as.numeric
+str(human$GNI) # success
+
+# 2. Exclude the unnecesary variables
+keep =  c("country", "education_ratio", "labour_ratio", "exp_life", "exp_education", "GNI", "maternal_mortality", "birth_rate", "parliament_F")
+human = select(human,one_of(keep))
+
+# 3. Remove the rows with NA observations
+human = human[complete.cases(human),]
+
+# 4. Exclude the non-countries
+# The last 7 observations are not countries, but larger regions, let's exclude them
+last = nrow(human)-7
+human = human[1:last,]
+
+# 5. Add countries as row names and remove that as variable
+rownames(human) = human$country
+human = select(human, -country)
+glimpse(human)
+
+# Save the results in file
+write.csv(human,file="data/human_2.csv",row.names=TRUE)
+
+# Make sure that the file is also readable
+human1 = read.csv("data/human_2.csv",header=TRUE)
